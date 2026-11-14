@@ -23,13 +23,13 @@ jobs:
         
         git clone --depth 1 https://github.com/jmpews/Dobby.git app/src/main/cpp/dobby
         
-        # iOS-ന്റെ @PAGEOFF മാറ്റി Android-ന്റെ :lo12: ഇടുന്നു
-        find app/src/main/cpp/dobby -name "*.asm" -type f -exec sed -i 's/@PAGEOFF/:lo12:/g' {} +
-        
-        # iOS-ന്റെ @PAGE മാറ്റുന്നു
+        # 1. @PAGE ഡിലീറ്റ് ചെയ്യുന്നു (Android-ൽ ഇത് ആവശ്യമില്ല)
         find app/src/main/cpp/dobby -name "*.asm" -type f -exec sed -i 's/@PAGE//g' {} +
         
-        # മുൻപത്തെ load_address എറർ ഫിക്സ്
+        # 2. @PAGEOFF മാറ്റി :lo12: സിമ്പോളിന്റെ മുൻപിൽ ചേർക്കുന്നു (കറക്റ്റ് ARM64 സിന്റാക്സ്)
+        find app/src/main/cpp/dobby -name "*.asm" -type f -exec sed -i -E 's/([a-zA-Z0-9_]+)@PAGEOFF/:lo12:\1/g' {} +
+        
+        # 3. മുൻപത്തെ load_address എറർ ഫിക്സ്
         sed -i 's/load_address/base/g' app/src/main/cpp/dobby/source/Backend/UserMode/PlatformUtil/Linux/ProcessRuntime.cc
         
     - name: Update build.gradle for NDK 23

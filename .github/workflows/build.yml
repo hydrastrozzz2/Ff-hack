@@ -23,11 +23,10 @@ jobs:
         
         git clone --depth 1 https://github.com/jmpews/Dobby.git app/src/main/cpp/dobby
         
-        # കൃത്യമായ ARM64 സിന്റാക്സ് ഫിക്സ് ചെയ്യുന്നു (:lo12: മുൻപിലേക്ക് മാറ്റുന്നു)
-        sed -i -E 's/([a-zA-Z0-9_]+)@PAGEOFF/:lo12:\1/g' app/src/main/cpp/dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm
-        sed -i 's/@PAGE//g' app/src/main/cpp/dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm
+        # Python script to perfectly patch the assembly syntax
+        python3 -c "f='app/src/main/cpp/dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm'; c=open(f).read(); c=c.replace('common_closure_bridge_handler @PAGEOFF', ':lo12:common_closure_bridge_handler').replace('common_closure_bridge_handler@PAGEOFF', ':lo12:common_closure_bridge_handler'); c=c.replace('common_closure_bridge_handler @PAGE', 'common_closure_bridge_handler').replace('common_closure_bridge_handler@PAGE', 'common_closure_bridge_handler'); open(f, 'w').write(c)"
         
-        # load_address -> base ഫിക്സ്
+        # Fix load_address error
         sed -i 's/load_address/base/g' app/src/main/cpp/dobby/source/Backend/UserMode/PlatformUtil/Linux/ProcessRuntime.cc
         
     - name: Update build.gradle for NDK 23

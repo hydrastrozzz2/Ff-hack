@@ -2,6 +2,7 @@ plugins { id 'com.android.application' }
 android {
     namespace 'com.smith.ffhack'
     compileSdk 33
+    ndkVersion "25.2.9519653"
     defaultConfig {
         applicationId "com.smith.ffhack"
         minSdk 24

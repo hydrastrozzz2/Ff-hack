@@ -14,7 +14,7 @@ jobs:
       run: |
         echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;23.1.7779620"
         
-    - name: Download Dependencies & Fix Dobby Assembly
+    - name: Download Dependencies & Patch Dobby
       run: |
         mkdir -p app/src/main/cpp/imgui
         wget https://github.com/ocornut/imgui/archive/refs/tags/v1.89.9.tar.gz
@@ -23,21 +23,16 @@ jobs:
         
         git clone --depth 1 https://github.com/jmpews/Dobby.git app/src/main/cpp/dobby
         
-        cat << 'PYEOF' > fix_asm.py
-        import os, re
-        for root, dirs, files in os.walk('app/src/main/cpp/dobby'):
-            for file in files:
-                if file.endswith('.asm') or file.endswith('.S'):
-                    path = os.path.join(root, file)
-                    with open(path, 'r') as f:
-                        content = f.read()
-                    content = re.sub(r'([a-zA-Z0-9_]+)@PAGEOFF', r':lo12:\1', content)
-                    content = re.sub(r'([a-zA-Z0-9_]+)@PAGE', r'\1', content)
-                    with open(path, 'w') as f:
-                        f.write(content)
-        PYEOF
-        
-        python3 fix_asm.py
+        echo "import os, re" > fix_dobby.py
+        echo "for root, dirs, files in os.walk('app/src/main/cpp/dobby'):" >> fix_dobby.py
+        echo "    for file in files:" >> fix_dobby.py
+        echo "        if file.endswith('.asm'):" >> fix_dobby.py
+        echo "            p = os.path.join(root, file)" >> fix_dobby.py
+        echo "            with open(p, 'r') as f: c = f.read()" >> fix_dobby.py
+        echo "            c = re.sub(r'([a-zA-Z0-9_]+)@PAGEOFF', r':lo12:\1', c)" >> fix_dobby.py
+        echo "            c = re.sub(r'([a-zA-Z0-9_]+)@PAGE', r'\1', c)" >> fix_dobby.py
+        echo "            with open(p, 'w') as f: f.write(c)" >> fix_dobby.py
+        python3 fix_dobby.py
         
         sed -i 's/load_address/base/g' app/src/main/cpp/dobby/source/Backend/UserMode/PlatformUtil/Linux/ProcessRuntime.cc
         

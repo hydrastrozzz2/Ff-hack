@@ -23,17 +23,11 @@ jobs:
         
         git clone --depth 1 https://github.com/jmpews/Dobby.git app/src/main/cpp/dobby
         
-        echo "import os, re" > fix_dobby.py
-        echo "for root, dirs, files in os.walk('app/src/main/cpp/dobby'):" >> fix_dobby.py
-        echo "    for file in files:" >> fix_dobby.py
-        echo "        if file.endswith('.asm'):" >> fix_dobby.py
-        echo "            p = os.path.join(root, file)" >> fix_dobby.py
-        echo "            with open(p, 'r') as f: c = f.read()" >> fix_dobby.py
-        echo "            c = re.sub(r'([a-zA-Z0-9_]+)@PAGEOFF', r':lo12:\1', c)" >> fix_dobby.py
-        echo "            c = re.sub(r'([a-zA-Z0-9_]+)@PAGE', r'\1', c)" >> fix_dobby.py
-        echo "            with open(p, 'w') as f: f.write(c)" >> fix_dobby.py
-        python3 fix_dobby.py
+        # Dobby-യുടെ iOS അസംബ്ലി ഫയൽ Android-ന് അനുയോജ്യമാക്കി മാറ്റുന്നു
+        sed -i 's/@PAGEOFF/:lo12:/g' app/src/main/cpp/dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm
+        sed -i 's/@PAGE//g' app/src/main/cpp/dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm
         
+        # മുൻപത്തെ load_address എറർ ഫിക്സ്
         sed -i 's/load_address/base/g' app/src/main/cpp/dobby/source/Backend/UserMode/PlatformUtil/Linux/ProcessRuntime.cc
         
     - name: Update build.gradle for NDK 23

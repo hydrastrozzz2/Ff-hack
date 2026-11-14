@@ -23,10 +23,18 @@ jobs:
         
         git clone --depth 1 https://github.com/jmpews/Dobby.git app/src/main/cpp/dobby
         
-        # Python script to perfectly patch the assembly syntax
-        python3 -c "f='app/src/main/cpp/dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm'; c=open(f).read(); c=c.replace('common_closure_bridge_handler @PAGEOFF', ':lo12:common_closure_bridge_handler').replace('common_closure_bridge_handler@PAGEOFF', ':lo12:common_closure_bridge_handler'); c=c.replace('common_closure_bridge_handler @PAGE', 'common_closure_bridge_handler').replace('common_closure_bridge_handler@PAGE', 'common_closure_bridge_handler'); open(f, 'w').write(c)"
+        # Dobby-യുടെ അസംബ്ലി ഫയൽ കൃത്യമായി തിരുത്തുന്നു
+        ASM_FILE="app/src/main/cpp/dobby/source/TrampolineBridge/ClosureTrampolineBridge/arm64/closure_bridge_arm64.asm"
         
-        # Fix load_address error
+        sed -i 's/@PAGEOFF/:lo12:/g' $ASM_FILE
+        sed -i 's/@PAGE//g' $ASM_FILE
+        
+        # ഫയൽ ശരിയായി മാറിയോ എന്ന് ലോഗിൽ കാണാൻ
+        echo "=== Patched Assembly File Lines ==="
+        grep -n "common_closure_bridge_handler" $ASM_FILE
+        echo "==================================="
+        
+        # load_address -> base ഫിക്സ്
         sed -i 's/load_address/base/g' app/src/main/cpp/dobby/source/Backend/UserMode/PlatformUtil/Linux/ProcessRuntime.cc
         
     - name: Update build.gradle for NDK 23

@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.18.1)
+project("ffhack")
+add_library(native-lib SHARED native-lib.cpp)
+target_include_directories(native-lib PRIVATE ${CMAKE_SOURCE_DIR}/imgui)
+file(GLOB IMGUI_SOURCES ${CMAKE_SOURCE_DIR}/imgui/*.cpp)
+add_library(imgui STATIC ${IMGUI_SOURCES})
+target_link_libraries(native-lib imgui android log EGL GLESv3 ${CMAKE_SOURCE_DIR}/../../../libs/arm64-v8a/libdobby.so)

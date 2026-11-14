@@ -1,0 +1,15 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.smith.ffhack'
+    compileSdk 33
+    defaultConfig {
+        applicationId "com.smith.ffhack"
+        minSdk 24
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+        ndk { abiFilters 'arm64-v8a' }
+        externalNativeBuild { cmake { cppFlags "-std=c++17" } }
+    }
+    externalNativeBuild { cmake { path "src/main/cpp/CMakeLists.txt" } }
+}

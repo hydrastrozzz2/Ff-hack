@@ -10,11 +10,11 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
         
-    - name: Setup Android NDK (Older Version)
+    - name: Setup Android NDK
       run: |
         echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;23.1.7779620"
         
-    - name: Download Dependencies & Patch
+    - name: Download Dependencies & Fix Dobby Assembly
       run: |
         mkdir -p app/src/main/cpp/imgui
         wget https://github.com/ocornut/imgui/archive/refs/tags/v1.89.9.tar.gz
@@ -23,13 +23,24 @@ jobs:
         
         git clone --depth 1 https://github.com/jmpews/Dobby.git app/src/main/cpp/dobby
         
-        # 1. ആദ്യം @PAGEOFF മാറ്റുന്നു (ഇത് ആദ്യം ചെയ്യണം)
-        find app/src/main/cpp/dobby -name "*.asm" -type f -exec sed -i -E 's/([a-zA-Z0-9_]+)@PAGEOFF/:lo12:\1/g' {} +
+        # Python സ്ക്രിപ്റ്റ് വെച്ച് Dobby-യുടെ iOS അസംബ്ലി കോഡ് Android-ന് അനുയോജ്യമാക്കി മാറ്റുന്നു
+        python3 -c "
+import os, re
+for root, dirs, files in os.walk('app/src/main/cpp/dobby'):
+    for file in files:
+        if file.endswith('.asm') or file.endswith('.S'):
+            path = os.path.join(root, file)
+            with open(path, 'r') as f:
+                content = f.read()
+            # @PAGEOFF മാറ്റി :lo12: ചേർക്കുന്നു
+            content = re.sub(r'([a-zA-Z0-9_]+)@PAGEOFF', r':lo12:\1', content)
+            # @PAGE ഡിലീറ്റ് ചെയ്യുന്നു
+            content = re.sub(r'([a-zA-Z0-9_]+)@PAGE', r'\1', content)
+            with open(path, 'w') as f:
+                f.write(content)
+        "
         
-        # 2. എന്നിട്ട് @PAGE ഡിലീറ്റ് ചെയ്യുന്നു
-        find app/src/main/cpp/dobby -name "*.asm" -type f -exec sed -i 's/@PAGE//g' {} +
-        
-        # 3. മുൻപത്തെ load_address എറർ ഫിക്സ്
+        # load_address -> base ഫിക്സ് ചെയ്യുന്നു
         sed -i 's/load_address/base/g' app/src/main/cpp/dobby/source/Backend/UserMode/PlatformUtil/Linux/ProcessRuntime.cc
         
     - name: Update build.gradle for NDK 23
